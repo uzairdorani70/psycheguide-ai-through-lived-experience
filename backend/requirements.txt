@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+motor           # Async driver for MongoDB (Crucial for FastAPI)
+python-dotenv   # To hide your passwords/keys
+pydantic        # For data validation
+requests        # For testing APIs if needed
+bcrypt
+python-jose[cryptography]
+torch
+transformers
