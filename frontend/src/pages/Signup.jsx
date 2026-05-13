@@ -66,12 +66,12 @@ const Signup = () => {
         className="w-full max-w-5xl flex flex-col md:flex-row-reverse 
         bg-white dark:bg-[#111827] 
         rounded-lg shadow-lg  
-        border border-slate-100 dark:border-white/10 overflow-hidden"
+        border border-slate-100"
       >
         {/* LEFT SIDE */}
         <div
           className="w-full md:w-1/2 p-6 sm:p-10 md:p-14 lg:p-16 
-        bg-gradient-to-br from-blue-600 to-blue-700 text-white flex flex-col justify-between"
+           bg-gradient-to-br from-blue-600 to-blue-700 text-white flex flex-col justify-between"
         >
           <div className="bg-white/20 p-4 rounded-2xl w-fit backdrop-blur-md flex items-center gap-3">
             <img src="/logo.png" className="w-8 h-8" />
@@ -96,7 +96,7 @@ const Signup = () => {
         </div>
 
         {/* RIGHT SIDE */}
-        <div className="w-full md:w-1/2 p-6 sm:p-10 md:p-14 lg:p-16 flex flex-col justify-center">
+        <div className="w-full bg-white  md:w-1/2 p-6 sm:p-10 md:p-14 lg:p-16 flex flex-col justify-center">
           <h1 className="text-2xl sm:text-3xl font-black text-blue-700 mb-2">
             Create Account
           </h1>
@@ -104,7 +104,7 @@ const Signup = () => {
           <button
             type="button"
             onClick={() => navigate("/")}
-            className="mb-4 text-sm font-bold text-slate-600 dark:text-slate-300 
+            className="mb-4 text-sm font-bold text-slate-600 dark:text-slate-600 
             hover:text-blue-600 transition flex items-center gap-1"
           >
             ← Back to Home

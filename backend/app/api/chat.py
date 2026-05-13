@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from app.core.database import get_database 
 from datetime import datetime, timezone
 from app.services.ai_model import get_ai_response
-from app.services.crisis_manager import evaluate_crisis
+
 
 router = APIRouter()
 
@@ -14,47 +14,29 @@ class UserMessage(BaseModel):
     message: str
     conversation_id: Optional[str] = None
 
+# chat.py ke andar 'chat_with_ai' function ko aise badlein:
 @router.post("/message")
 async def chat_with_ai(user_input: UserMessage):
     try:
         db = get_database()
         chats_collection = db["chats"]
-        
-        current_user = user_input.username 
         conv_id = user_input.conversation_id if user_input.conversation_id else str(uuid.uuid4())
 
-        # 1. Message Count Check
-        message_count = await chats_collection.count_documents({"conversation_id": conv_id})
-        if message_count >= 300:
-             return {
-                "reply": "You've reached the 300-message limit for this conversation. Please start a 'New Chat'.",
-                "limit_reached": True,
-                "conversation_id": conv_id
-            }
+        # 1. AI Response logic call karein
+        ai_reply, emotion_tag = await get_ai_response(user_input.message)
 
-        # 2. History fetch
-        history_docs = await chats_collection.find({"conversation_id": conv_id}).sort("timestamp", -1).limit(10).to_list(10)
+       
+        danger_keywords = ["die", "suicide", "kill", "hopeless", "end my life", "death"]
+        is_danger = any(word in user_input.message.lower() for word in danger_keywords)
 
-        # 3. AI Response logic
-        ai_reply, emotion_tag = await get_ai_response(user_input.message, history_docs)
-
-        # 4. Crisis evaluation (Positional arguments fix)
-        is_user_in_danger, crisis_suggestion = evaluate_crisis(user_input.message, emotion_tag, 0.9)
-        
-        if emotion_tag.lower() == "suicidal" or emotion_tag.lower() == "suicide": 
-            is_user_in_danger = True
-            
-        if is_user_in_danger: 
-            ai_reply = crisis_suggestion
-
-        # 5. Database Save
+        # 3. Database Save
         chat_document = {
-            "user_id": current_user,
+            "user_id": user_input.username,
             "conversation_id": conv_id,
             "message": user_input.message,
             "ai_response": ai_reply,
             "emotion": emotion_tag,
-            "is_crisis": is_user_in_danger,
+            "is_crisis": is_danger,  # ✅ Agar dangerous word hai toh True save hoga
             "timestamp": datetime.now(timezone.utc)
         }
         
@@ -63,9 +45,8 @@ async def chat_with_ai(user_input: UserMessage):
         return {
             "reply": ai_reply, 
             "emotion": emotion_tag, 
-            "crisis_alert": is_user_in_danger,
-            "conversation_id": conv_id,
-            "message_count": message_count + 1
+            "crisis_alert": is_danger, # ✅ Frontend ko alert status bhejien
+            "conversation_id": conv_id
         }
         
     except Exception as e:
@@ -112,3 +93,23 @@ async def delete_chat_session(conversation_id: str):
         return {"message": "Deleted", "count": result.deleted_count}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+# chat.py ke bilkul niche add karein
+@router.post("/predict")
+async def ai_prediction_only(data: dict):
+    try:
+        from app.services.bert_service import bert_engine
+        from app.services.ai_model import LABEL_TAGS
+        
+        message = data.get("message", "")
+        if not message:
+            return {"emotion": "neutral", "confidence": 0.0}
+            
+        # BERT model se prediction lena
+        predicted_id, confidence = bert_engine.predict(message)
+        tag = LABEL_TAGS[predicted_id]
+        
+        return {"emotion": tag, "confidence": confidence}
+    except Exception as e:
+        print(f"Predict Route Error: {e}")
+        return {"emotion": "neutral", "confidence": 0.0}

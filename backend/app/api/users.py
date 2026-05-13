@@ -75,6 +75,7 @@ def send_reset_email(user_email, token):
     message.attach(MIMEText(body, "html"))
 
     try:
+        print(f"DEBUG: Attempting to send email to: {user_email}")
         server = smtplib.SMTP("smtp.gmail.com", 587)
         server.starttls()
         server.login(sender_email, app_password)
@@ -135,18 +136,30 @@ async def register(user: UserSignup):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/verify-email")
-async def verify_email(token: str = Query(...)):
+async def verify_email(token: str):
     db = get_database()
+    
+    # 1. User ko token se dhoondein
     user = await db["users"].find_one({"verification_token": token})
     
     if not user:
+        # Agar token ghalat ho toh error page par bhejien ya error dikhayein
         raise HTTPException(status_code=400, detail="Invalid or expired verification token")
 
+    # 2. User ko verify karein (is_active aur is_verified dono ko True kar dein)
     await db["users"].update_one(
         {"_id": user["_id"]},
-        {"$set": {"is_active": True}, "$unset": {"verification_token": ""}}
+        {
+            "$set": {
+                "is_active": True, 
+                "is_verified": True  # Aapne login mein 'is_verified' check kiya tha, isliye ise bhi set karein
+            }, 
+            "$unset": {"verification_token": ""}
+        }
     )
     
+    # 3. Redirect karein Frontend Login page par (Port 5173)
+    # Taake user ko lage ke verify hone ke baad wo login par aa gaya hai
     return RedirectResponse(url="http://localhost:5173/login?verified=true")
 
 @router.post("/login")

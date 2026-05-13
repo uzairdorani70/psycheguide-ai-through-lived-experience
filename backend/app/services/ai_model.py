@@ -1,8 +1,7 @@
 from app.services.bert_service import bert_engine
-from app.services.crisis_manager import evaluate_crisis
-from app.services.llm_service import get_llm_response # Agar Groq use kar rahe hain toh wahan se import karein
+# ✅ Evaluate crisis ki import hata dein kyunke hum manager use nahi kar rahe
+from app.services.llm_service import get_llm_response 
 
-# Updated 30 Labels List (Jo Colab ne print ki thi)
 LABEL_TAGS = [
     'Anxiety', 'Bipolar', 'Depression', 'Normal', 'Personality disorder', 'Stress',
     'Suicidal', 'admiration', 'amusement', 'anger', 'annoyance', 'approval', 'caring',
@@ -13,18 +12,13 @@ LABEL_TAGS = [
 
 async def get_ai_response(user_text: str, chat_history: list = None):
     try:
-        # 1. BERT Prediction
+        # 1. BERT Prediction (Emotion detect karne ke liye)
         predicted_id, confidence = bert_engine.predict(user_text)
         
-        # --- IMPROVED LOGIC FOR COMMON GREETINGS ---
-        common_greetings = ["morning", "good morning", "hello", "hi", "hey", "evening"]
         user_text_clean = user_text.lower().strip()
-        
-        # Pehle check karein ke kya sirf greeting hai
+        common_greetings = ["morning", "good morning", "hello", "hi", "hey", "evening"]
+
         if user_text_clean in common_greetings:
-            tag = "neutral"
-        # Phir confidence check karein (80% se kam par neutral rakhein common words ke liye)
-        elif confidence < 0.80 and user_text_clean in ["morning", "night", "day"]:
             tag = "neutral"
         elif confidence < 0.60:
             tag = "neutral"
@@ -33,12 +27,11 @@ async def get_ai_response(user_text: str, chat_history: list = None):
         
         print(f"DEBUG: BERT Analysis -> {tag} (Confidence: {confidence*100:.2f}%)")
 
-        # 2. Safety Check (Crisis)
-        is_crisis, suggestion = evaluate_crisis(user_text, tag, confidence)
-        if is_crisis:
-            return suggestion, "Crisis"
+        # ❌ SAFETY CHECK REMOVED: 
+        # Pehle yahan 'evaluate_crisis' call hota tha jo API ko block karta tha.
+        # Ab ye bypass ho kar seedha niche LLM ke paas jayega.
 
-        # 3. LLM Response
+        # 2. LLM Response (Ab API hi in keywords ka jawab degi)
         llm_reply = await get_llm_response(user_text, tag)
         
         return llm_reply, tag

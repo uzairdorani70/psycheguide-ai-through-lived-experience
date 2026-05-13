@@ -54,7 +54,7 @@ const Login = () => {
        rounded-xl shadow-2xl  overflow-hidden"
       >
         {/* LEFT SIDE */}
-        <div className="w-full md:w-1/2 p-6 sm:p-10 md:p-14 lg:p-16 .bg-gradient-to-br from-blue-600 to-blue-700 text-white flex flex-col justify-between relative">
+        <div className="w-full md:w-1/2 p-6 sm:p-10 md:p-14 lg:p-16 bg-gradient-to-br from-blue-600 to-blue-700 text-white flex flex-col justify-between relative">
           <div className="bg-white/20 p-4 rounded-2xl w-fit backdrop-blur-md border border-white/20 flex items-center gap-3">
             <img src="/logo.png" className="w-8 h-8" />
             <span className="font-black text-xl">PsycheGuide</span>
