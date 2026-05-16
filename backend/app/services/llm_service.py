@@ -1,43 +1,77 @@
 import asyncio
+import os
+import re
 from groq import Groq
-
 from app.core.config import settings
+from dotenv import load_dotenv
 
-client = Groq(api_key=settings.GROQ_API_KEY)
-
+load_dotenv()
 
 async def get_llm_response(user_text: str, tag: str) -> str:
-    print(f"DEBUG: Calling Groq for Emotion: {tag}")
+    API_KEYS = [
+        os.getenv("GROQ_API_KEY_1"),
+        os.getenv("GROQ_API_KEY_2"),
+        os.getenv("GROQ_API_KEY_3"),
+        getattr(settings, "GROQ_API_KEY_1", None),
+        getattr(settings, "GROQ_API_KEY_2", None),
+        getattr(settings, "GROQ_API_KEY_3", None)
+    ]
+    
+    valid_keys = [k for k in API_KEYS if k and str(k).strip() != ""]
+    
+    if not valid_keys:
+        print("CRITICAL ERROR: No Groq API keys found! Check your .env file.")
+        return "I am here for you. Please tell me more about how you're feeling."
 
-    def _sync_chat() -> str | None:
-        system_prompt = f"""
-You are PsychiGuide AI, a professional and empathetic mental health assistant.
-The user's detected emotion is: {tag}.
-Provide a warm and supportive response in English (Max 3 sentences).
-"""
+    # 🎯 FIX 1: (Available Keys: 3) hata diya
+    print("DEBUG: Calling Groq")
 
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_text},
-            ],
-        )
+    def _sync_chat(api_key: str) -> str | None:
+        try:
+            client = Groq(api_key=api_key)
+            response = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[
+                    {"role": "system", "content": f"You are PsycheGuide AI. User emotion: {tag}. Max 3 sentences."},
+                    {"role": "user", "content": user_text},
+                ],
+                timeout=15.0 
+            )
 
-        if not response.choices:
+            if not response or not getattr(response, 'choices', None):
+                return None
+
+            response_str = str(response)
+
+            match = re.search(r'content=["\'](.*?)["\'](?:, role=|, tags=|\))', response_str, re.DOTALL)
+            if match:
+                clean_text = match.group(1)
+                try:
+                    clean_text = clean_text.encode().decode('unicode_escape')
+                except:
+                    pass
+                return clean_text.strip()
+
+            try:
+                return str(response.choices.message.content).strip()
+            except:
+                pass
+
             return None
 
-        msg = response.choices[0].message
-        if msg is None or msg.content is None:
+        except Exception as e:
+            print(f"GROQ SERVER REJECTED KEY: {str(e)}") 
             return None
 
-        return msg.content.strip()
-
-    try:
-        text = await asyncio.to_thread(_sync_chat)
+    for current_key in valid_keys:
+        text = await asyncio.to_thread(_sync_chat, current_key)
+        
         if text:
+            # 🎯 FIX 2: Key 1 worked perfectly ki jagah generic text
+            print("SUCCESS: Response received perfectly!")
             return text
-        return "I am here for you. Please tell me more about how you're feeling."
-    except Exception as e:
-        print(f"Groq API Error: {str(e)}")
-        return "I am here for you. Please tell me more about how you're feeling."
+            
+        # 🎯 FIX 3: Key 1 failed ki jagah generic text
+        print("Connection failed. Trying fallback...")
+
+    return "I am here for you. Please tell me more about how you're feeling."

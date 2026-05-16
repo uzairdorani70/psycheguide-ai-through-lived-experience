@@ -59,15 +59,14 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white text-gray-900 p-4 sm:p-6">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-5xl flex flex-col md:flex-row-reverse 
-        bg-white dark:bg-[#111827] 
-        rounded-lg shadow-lg  
-        border border-slate-100"
-      >
+    <div className="min-h-screen flex items-center justify-center text-gray-900 p-4 sm:p-6 font-sans relative overflow-hidden">
+         <motion.div
+           initial={{ opacity: 0, y: 20 }}
+           animate={{ opacity: 1, y: 0 }}
+           transition={{ duration: 0.5 }}
+           className="w-full max-w-5xl flex flex-col md:flex-row-reverse 
+          rounded-xl shadow-2xl  overflow-hidden"
+         >
         {/* LEFT SIDE */}
         <div
           className="w-full md:w-1/2 p-6 sm:p-10 md:p-14 lg:p-16 

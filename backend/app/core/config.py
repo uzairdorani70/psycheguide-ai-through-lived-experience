@@ -34,6 +34,6 @@ class Settings:
     # Debugging ke liye (Sirf development mein use karein)
     def __init__(self):
         if not self.GROQ_API_KEY:
-            print("⚠️ WARNING: GROQ_API_KEY is missing in .env file!")
+            print("WARNING: GROQ_API_KEY is missing in .env file!")
 
 settings = Settings()

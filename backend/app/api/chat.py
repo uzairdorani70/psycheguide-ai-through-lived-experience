@@ -23,11 +23,27 @@ async def chat_with_ai(user_input: UserMessage):
         conv_id = user_input.conversation_id if user_input.conversation_id else str(uuid.uuid4())
 
         # 1. AI Response logic call karein
+     # @router.post("/message") ke andar sirf is hissay ko update karein:
+
+        # 1. AI Response logic call karein
         ai_reply, emotion_tag = await get_ai_response(user_input.message)
 
-       
-        danger_keywords = ["die", "suicide", "kill", "hopeless", "end my life", "death"]
-        is_danger = any(word in user_input.message.lower() for word in danger_keywords)
+        # 2. Safety Net: Keywords + BERT Emotion Tag dono check karein
+        danger_keywords = ["die", "suicide", "kill", "hopeless", "end my life", "death", "mar jao"]
+        has_keywords = any(word in user_input.message.lower() for word in danger_keywords)
+        
+        # 🎯 AGAR BERT 'Suicidal' kahe ya keyword mile, toh 'is_crisis' True hoga
+        is_crisis = has_keywords or (emotion_tag and emotion_tag.lower() == "suicidal")
+
+        # 🚨 Emergency Response Injection (Agar crisis hai toh AI reply ke sath helpline jor dein)
+        if is_crisis:
+            helpline_message = (
+                "⚠️ [EMERGENCY CRISIS ALERT] Please know that you are not alone and help is available. "
+                "If you are feeling overwhelmed, please reach out immediately to a trusted professional or a helpline: "
+                "Umang Pakistan: 0311-7786264 (Available 24/7). We value your life. \n\n"
+            )
+            # AI ke reply ke upar helpline ka message thonk dein
+            ai_reply = helpline_message + ai_reply
 
         # 3. Database Save
         chat_document = {
@@ -36,7 +52,7 @@ async def chat_with_ai(user_input: UserMessage):
             "message": user_input.message,
             "ai_response": ai_reply,
             "emotion": emotion_tag,
-            "is_crisis": is_danger,  # ✅ Agar dangerous word hai toh True save hoga
+            "is_crisis": is_crisis,  # ✅ Database mein safe record rahega
             "timestamp": datetime.now(timezone.utc)
         }
         
@@ -45,7 +61,7 @@ async def chat_with_ai(user_input: UserMessage):
         return {
             "reply": ai_reply, 
             "emotion": emotion_tag, 
-            "crisis_alert": is_danger, # ✅ Frontend ko alert status bhejien
+            "crisis_alert": is_crisis, # ✅ Frontend ko alert status bhejien taake naya popup dikha sakein
             "conversation_id": conv_id
         }
         

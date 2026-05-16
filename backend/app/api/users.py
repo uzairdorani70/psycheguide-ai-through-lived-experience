@@ -33,7 +33,9 @@ async def send_verification_email(user_email, token):
     <html>
       <body style="font-family: Arial, sans-serif;">
         <h2 style="color: #0891b2;">Welcome to PsycheGuide!</h2>
-        <p>Please verify your email to activate your account:</p>
+        <p>Thank you for joining PsycheGuide — your AI-powered mental wellness platform built through lived experiences and supportive guidance.
+
+To complete your registration and secure your account, please verify your email address by clicking the button below:</p>
         <a href="{verify_link}" style="background-color: #06b6d4; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Verify Email</a>
         <p>If you did not sign up, please ignore this email.</p>
       </body>
